@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}飲品糖分計算器{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; max-width:900px; margin:30px auto; padding:0 16px; }
+        header { display:flex; justify-content:space-between; align-items:center; }
+        .card { border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:12px; }
+        input, textarea, select { width:100%; padding:8px; box-sizing:border-box; margin-top:6px; }
+        button { padding:8px 12px; margin-top:8px; }
+        a.btn { text-decoration:none; display:inline-block; padding:8px 12px; background:#007bff; color:#fff; border-radius:6px; }
+        a.btn.secondary { background:#6c757d; }
+        table { width:100%; border-collapse:collapse; }
+        table th, table td { padding:8px; border:1px solid #e8e8e8; text-align:left; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><a href="/" style="text-decoration:none; color:inherit;">🧃 校園飲品糖分計算機</a></h1>
+        <nav>
+            <a class="btn" href="/admin">Admin</a>
+        </nav>
+    </header>
+    <hr>
+    {% block content %}{% endblock %}
+</body>
+</html>

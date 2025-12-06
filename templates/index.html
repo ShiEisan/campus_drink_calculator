@@ -1,0 +1,106 @@
+{% extends "layout.html" %}
+{% block title %}查詢飲品{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>查詢飲品</h2>
+    <p>輸入飲品名稱 (或部分名稱)，或選擇資料庫中的飲品：</p>
+
+    <input type="text" id="q" placeholder="輸入名稱，例如：珍珠奶茶">
+    <div style="margin-top:8px;">
+        <button id="searchBtn">🔎 搜尋</button>
+        <button id="listAllBtn" style="margin-left:8px;">顯示全部</button>
+    </div>
+
+    <div id="results" style="margin-top:12px;"></div>
+</div>
+
+<div class="card">
+    <h3>耗能 & 步行時間估算</h3>
+    <p>請輸入你的體重（kg），系統會計算需要走多久（分鐘）才會消耗該飲品熱量。預設 60 kg。</p>
+    <label>體重 (kg)</label>
+    <input type="number" id="userWeight" value="60" min="30" max="200">
+
+    <div id="calcResult" style="margin-top:12px;"></div>
+</div>
+
+<script>
+// fetch 列表或搜尋
+async function fetchDrinks(q="") {
+    const url = q ? `/api/drinks?q=${encodeURIComponent(q)}` : `/api/drinks`;
+    const r = await fetch(url);
+    return await r.json();
+}
+
+function escapeHtml(s){
+    if(!s) return "";
+    return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function sugarLevel(g){
+    if (g <= 5) return "低糖";
+    if (g <= 25) return "中糖";
+    return "高糖";
+}
+
+// 卡路里轉換為步行分鐘（用 MET 計算）
+// kcal_per_min = (MET * weight_kg * 3.5) / 200
+// 假設走路 MET = 3.5（快走可改為 4.5）
+function minutesToBurn(calories, weightKg, met=3.5){
+    const kcalPerMin = (met * weightKg * 3.5) / 200;
+    if (kcalPerMin <= 0) return Infinity;
+    return calories / kcalPerMin;
+}
+
+async function renderResults(list){
+    const root = document.getElementById('results');
+    if (!list.length) {
+        root.innerHTML = "<p>找不到符合的飲品。</p>";
+        return;
+    }
+    root.innerHTML = "";
+    list.forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML = `
+            <h3>${escapeHtml(d.name)}</h3>
+            <p>品牌：${escapeHtml(d.brand || "-")} / 份量：${escapeHtml(d.size || "-")}</p>
+            <p>熱量：<strong>${d.calories} kcal</strong> &nbsp; 含糖：<strong>${d.sugar_grams} g</strong>（${sugarLevel(d.sugar_grams)}）</p>
+            <p>
+                <button class="calcBtn" data-cal="${d.calories}">計算步行時間消耗這杯</button>
+                <a href="/admin/${d.id}/edit" style="margin-left:8px;">編輯(管理)</a>
+            </p>
+        `;
+        root.appendChild(el);
+    });
+
+    // 綁定計算按鈕
+    document.querySelectorAll('.calcBtn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+            const cal = parseFloat(btn.dataset.cal);
+            const weight = parseFloat(document.getElementById('userWeight').value) || 60;
+            const mins = minutesToBurn(cal, weight, 3.5);
+            const rounded = Math.ceil(mins);
+            const area = document.getElementById('calcResult');
+            area.innerHTML = `<p>若以快走 (MET 3.5) 消耗，<strong>大約需要 ${rounded} 分鐘</strong>（體重 ${weight} kg）。</p>`;
+        });
+    });
+}
+
+document.getElementById('searchBtn').addEventListener('click', async () => {
+    const q = document.getElementById('q').value.trim();
+    const list = await fetchDrinks(q);
+    await renderResults(list);
+});
+
+document.getElementById('listAllBtn').addEventListener('click', async ()=>{
+    const list = await fetchDrinks();
+    await renderResults(list);
+});
+
+// 初始載入：顯示前幾筆
+(async ()=> {
+    const list = await fetchDrinks();
+    renderResults(list);
+})();
+</script>
+{% endblock %}

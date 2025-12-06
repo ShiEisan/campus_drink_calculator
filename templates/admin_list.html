@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% block title %}Admin - 飲品管理{% endblock %}
+{% block content %}
+<h2>飲品管理</h2>
+<p><a class="btn" href="/admin/new">➕ 新增飲品</a></p>
+
+<table>
+    <thead><tr><th>ID</th><th>名稱</th><th>品牌</th><th>份量</th><th>熱量(kcal)</th><th>糖(g)</th><th>操作</th></tr></thead>
+    <tbody id="tb"></tbody>
+</table>
+
+<script>
+async function load(){
+    const res = await fetch('/api/drinks');
+    const data = await res.json();
+    const tb = document.getElementById('tb');
+    tb.innerHTML = '';
+    data.forEach(d=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${d.id}</td>
+            <td>${d.name}</td>
+            <td>${d.brand || ''}</td>
+            <td>${d.size || ''}</td>
+            <td>${d.calories}</td>
+            <td>${d.sugar_grams}</td>
+            <td>
+                <a href="/admin/${d.id}/edit">編輯</a>
+                <button data-id="${d.id}" class="delBtn" style="margin-left:8px;">刪除</button>
+            </td>
+        `;
+        tb.appendChild(tr);
+    });
+    document.querySelectorAll('.delBtn').forEach(b=>{
+        b.addEventListener('click', async ()=>{
+            if (!confirm('確定刪除？')) return;
+            const id = b.dataset.id;
+            const r = await fetch(`/api/drinks/${id}`, { method: 'DELETE' });
+            if (r.ok) load();
+            else alert('刪除失敗');
+        });
+    });
+}
+load();
+</script>
+{% endblock %}

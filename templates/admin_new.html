@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block title %}新增飲品{% endblock %}
+{% block content %}
+<h2>新增飲品</h2>
+<form id="f">
+    <label>名稱</label><input id="name" required>
+    <label>品牌</label><input id="brand">
+    <label>份量（如：中杯）</label><input id="size">
+    <label>熱量 (kcal)</label><input id="calories" type="number" step="0.1" required>
+    <label>含糖 (g)</label><input id="sugar" type="number" step="0.1" required>
+    <button type="submit">儲存</button>
+    <a class="btn secondary" href="/admin" style="margin-left:8px;">取消</a>
+</form>
+
+<script>
+document.getElementById('f').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const payload = {
+        name: document.getElementById('name').value.trim(),
+        brand: document.getElementById('brand').value.trim(),
+        size: document.getElementById('size').value.trim(),
+        calories: parseFloat(document.getElementById('calories').value),
+        sugar_grams: parseFloat(document.getElementById('sugar').value)
+    };
+    const r = await fetch('/api/drinks', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+    });
+    if (r.status === 201) {
+        alert('新增成功');
+        window.location.href = '/admin';
+    } else {
+        const ejson = await r.json();
+        alert('失敗：' + (ejson.error || JSON.stringify(ejson)));
+    }
+});
+</script>
+{% endblock %}
